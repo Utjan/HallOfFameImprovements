@@ -28,6 +28,7 @@ namespace HallOfFameImprovements
         internal static ConfigEntry<bool> enabledPlugin;
         internal static ConfigEntry<double> bonusMultiplierNonDogtagItems;
         internal static ConfigEntry<double> bonusMultiplierDogtags;
+        internal static ConfigEntry<double> uniqueItemBonus;
 
         private void Awake() //Awake() will run once when your plugin loads
         {
@@ -52,6 +53,13 @@ namespace HallOfFameImprovements
                 new ConfigDescription("Multiplies the base bonus to Hall of Fame skill buff gained from dogtags. Leave at 1 for default EFT bonus", new AcceptableValueRange<double>(0, 5))
             );
 
+            uniqueItemBonus = Config.Bind(
+                "Main Settings",
+                "Buff bonus per unique item",
+                0.2d,
+                new ConfigDescription("Hall of Fame skill buff bonus gained per unique non-dogtag item. Applies on top of the bonus gained based on the item's value", new AcceptableValueRange<double>(0, 1))
+            );
+
             LogSource = Logger;
 
             new ApplyNonDogtagItemsPatch().Enable();
@@ -62,6 +70,8 @@ namespace HallOfFameImprovements
     internal class ApplyNonDogtagItemsPatch : ModulePatch
     {
         public static Dictionary<string, HandbookData> hbData;
+
+        public static List<string> uniqueItemList;
 
         protected override MethodBase GetTargetMethod()
         {
@@ -86,8 +96,9 @@ namespace HallOfFameImprovements
                 Plugin.LogSource.LogWarning($"Bonus from dogtags {double_0}");
 #endif
 
-                LootItemClass gclass2629_0 = Traverse.Create(__instance).Field("gclass2629_0").GetValue<LootItemClass>();
+                uniqueItemList = new List<string>();
 
+                LootItemClass gclass2629_0 = Traverse.Create(__instance).Field("gclass2629_0").GetValue<LootItemClass>();
                 using (List<Item>.Enumerator enumerator = gclass2629_0.GetAllItems().Where(new Func<Item, bool>(ItemIsNotDogtag)).ToList<Item>().GetEnumerator())
                 {
                     while (enumerator.MoveNext())
@@ -97,6 +108,13 @@ namespace HallOfFameImprovements
                             continue;
 
                         double bonus = GetBuffBonusFromPrice(price);
+
+                        if (Plugin.uniqueItemBonus.Value > 0 && !uniqueItemList.Contains(enumerator.Current.TemplateId))
+                        {
+                            bonus += Plugin.uniqueItemBonus.Value;
+                            uniqueItemList.Add(enumerator.Current.TemplateId);
+                        }
+
                         if (bonus == 0)
                             continue;
 
@@ -150,7 +168,7 @@ namespace HallOfFameImprovements
             if (price <= 0)
                 return 0;
             double bonus = 0;
-            bonus = (Math.Log10(price) - 4) / 10;
+            bonus = (Math.Log10(price) - 4.5) / 5;
             bonus = Math.Max(bonus, 0);
             return bonus;
         }
