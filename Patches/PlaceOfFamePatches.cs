@@ -38,12 +38,12 @@ namespace HallOfFameImprovements.Patches
             GClass1420 gclass;
             if ((gclass = (__instance.Data.CurrentStage.Bonuses.Data.FirstOrDefault(new Func<GClass1407, bool>(PlaceOfFameBehaviour.Class1644.class1644_0.method_3)) as GClass1420)) != null)
             {
-                double double_0 = Traverse.Create(__instance).Field("double_0").GetValue<double>();
+                double levelingBonus = Traverse.Create(__instance).Field("double_0").GetValue<double>();
 
-                double_0 *= Plugin.bonusMultiplierDogtags.Value;
+                levelingBonus *= Plugin.bonusMultiplierDogtags.Value;
 
 #if DEBUG
-                Plugin.LogSource.LogWarning($"Bonus from dogtags {double_0}");
+                Plugin.LogSource.LogWarning($"Bonus from dogtags {levelingBonus}");
 #endif
 
                 uniqueItemList = new List<string>();
@@ -59,33 +59,32 @@ namespace HallOfFameImprovements.Patches
 
                         double bonus = GetBuffBonusFromPrice(price);
 
+                        if (bonus > 0)
+                            levelingBonus += bonus * Plugin.bonusMultiplierNonDogtagItems.Value;
+
                         if (Plugin.uniqueItemBonus.Value > 0 && !uniqueItemList.Contains(enumerator.Current.TemplateId))
                         {
-                            bonus += Plugin.uniqueItemBonus.Value;
+                            levelingBonus += Plugin.uniqueItemBonus.Value;
                             uniqueItemList.Add(enumerator.Current.TemplateId);
                         }
-
-                        if (bonus == 0)
-                            continue;
 
 #if DEBUG
                         Plugin.LogSource.LogWarning($"BONUS of {enumerator.Current.Name.Localized()} is {bonus}");
 #endif
 
-                        double_0 += bonus * Plugin.bonusMultiplierNonDogtagItems.Value;
                     }
                 }
 
                 BonusController bonusController_0 = Traverse.Create(__instance).Field("bonusController_0").GetValue<BonusController>();
 
-                GClass1420 gclass2 = new GClass1420(Math.Round(double_0, 1), gclass.BoostValue, gclass.Id, gclass.IsVisible, gclass.Icon);
+                GClass1420 gclass2 = new GClass1420(Math.Round(levelingBonus, 1), gclass.BoostValue, gclass.Id, gclass.IsVisible, gclass.Icon);
                 bonusController_0.RemoveBonus(gclass, false);
                 __instance.Data.CurrentStage.Bonuses.Data.Remove(gclass);
                 __instance.Data.CurrentStage.Bonuses.Data.Add(gclass2);
                 bonusController_0.AddBonus(gclass2, false);
 
 #if DEBUG
-                Plugin.LogSource.LogWarning($"HALL OF FAME BONUS UPDATED: {double_0}");
+                Plugin.LogSource.LogWarning($"HALL OF FAME BONUS UPDATED: {levelingBonus}");
 #endif
             }
         }
@@ -117,8 +116,7 @@ namespace HallOfFameImprovements.Patches
         {
             if (price <= 0)
                 return 0;
-            double bonus = 0;
-            bonus = (Math.Log10(price) - 4) / 8;
+            double bonus = (Math.Log10(price) - 4) / 8;
             bonus = Math.Max(bonus, 0);
             return bonus;
         }
