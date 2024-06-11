@@ -33,30 +33,30 @@ namespace HallOfFameImprovements
         private void Awake() //Awake() will run once when your plugin loads
         {
             enabledPlugin = Config.Bind(
-                "Main Settings",
-                "Enable Mod",
+                "Hall of Fame Improvements",
+                "1. Enable Mod",
                 true,
                 new ConfigDescription("Enable Hall of Fame Improvements")
             );
 
             bonusMultiplierNonDogtagItems = Config.Bind(
-                "Main Settings",
+                "Hall of Fame Improvements",
                 "Non-Dogtag Item buff bonus multiplier",
                 1d,
                 new ConfigDescription("Multiplies the base bonus to Hall of Fame skill buff gained from non-dogtag items. 0.5 = half bonus gain. 2.0 = double bonus gain", new AcceptableValueRange<double>(0, 5))
             );
 
             bonusMultiplierDogtags = Config.Bind(
-                "Main Settings",
+                "Hall of Fame Improvements",
                 "Dogtag buff bonus multiplier",
                 1d,
                 new ConfigDescription("Multiplies the base bonus to Hall of Fame skill buff gained from dogtags. Leave at 1 for default EFT bonus", new AcceptableValueRange<double>(0, 5))
             );
 
             uniqueItemBonus = Config.Bind(
-                "Main Settings",
+                "Hall of Fame Improvements",
                 "Buff bonus per unique item",
-                0.2d,
+                0.1d,
                 new ConfigDescription("Hall of Fame skill buff bonus gained per unique non-dogtag item. Applies on top of the bonus gained based on the item's value", new AcceptableValueRange<double>(0, 1))
             );
 
@@ -81,6 +81,9 @@ namespace HallOfFameImprovements
         [PatchPostfix]
         static void Postfix(PlaceOfFameBehaviour __instance)
         {
+            if (!Plugin.enabledPlugin.Value)
+                return;
+
 #if DEBUG
             Plugin.LogSource.LogWarning($"Calculating Hall of Fame bonus");
 #endif
@@ -168,7 +171,7 @@ namespace HallOfFameImprovements
             if (price <= 0)
                 return 0;
             double bonus = 0;
-            bonus = (Math.Log10(price) - 4.5) / 5;
+            bonus = (Math.Log10(price) - 4) / 8;
             bonus = Math.Max(bonus, 0);
             return bonus;
         }
@@ -184,6 +187,9 @@ namespace HallOfFameImprovements
         [PatchPostfix]
         static void Postfix(PlaceOfFameBehaviour __instance, Item item, EFT.InventoryLogic.IContainer itemContainer, CommandStatus status)
         {
+            if (!Plugin.enabledPlugin.Value)
+                return;
+
             if (status != CommandStatus.Succeed)
             {
                 return;
