@@ -16,6 +16,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Comfort.Common;
+using EFT.Interactive;
 
 namespace HallOfFameImprovements
 {
@@ -58,14 +59,16 @@ namespace HallOfFameImprovements
 
             LogSource.LogWarning($"AWAKE");
 
-            new TestPatch1().Enable();
+            new ApplyNonDogtagItemsPatch().Enable();
+            new UpdateBonusOnItemSlottedPatch().Enable();
+            
             LogSource.LogWarning($"HOF PATCHED");
             //new BeaconPlantPatch().Enable();
         }
 
     }
 
-    internal class TestPatch1 : ModulePatch
+    internal class ApplyNonDogtagItemsPatch : ModulePatch
     {
         public static Dictionary<string, HandbookData> hbData;
 
@@ -77,24 +80,29 @@ namespace HallOfFameImprovements
         [PatchPostfix]
         static void Postfix(PlaceOfFameBehaviour __instance)
         {
-            Plugin.LogSource.LogWarning($"DOING method_14");
+            Plugin.LogSource.LogWarning($"Calculating Hall of Fame bonus");
 
             GClass1420 gclass;
             if ((gclass = (__instance.Data.CurrentStage.Bonuses.Data.FirstOrDefault(new Func<GClass1407, bool>(PlaceOfFameBehaviour.Class1644.class1644_0.method_3)) as GClass1420)) != null)
             {
-                Plugin.LogSource.LogWarning($"HERE 1");
-
                 double double_0 = Traverse.Create(__instance).Field("double_0").GetValue<double>();
 
-                Plugin.LogSource.LogWarning($"double_0 {double_0}");
+                Plugin.LogSource.LogWarning($"Bonus from dogtags {double_0}");
 
                 LootItemClass gclass2629_0 = Traverse.Create(__instance).Field("gclass2629_0").GetValue<LootItemClass>();
 
-                using (List<Item>.Enumerator enumerator = gclass2629_0.GetAllItems().Where(new Func<Item, bool>(TestPatch1.method_1)).ToList<Item>().GetEnumerator())
+                using (List<Item>.Enumerator enumerator = gclass2629_0.GetAllItems().Where(new Func<Item, bool>(ItemIsNotDogtag)).ToList<Item>().GetEnumerator())
                 {
                     while (enumerator.MoveNext())
                     {
-                        double_0 += GetItemHandbookPrice(enumerator.Current) / 100000;
+                        float price = GetItemHandbookPrice(enumerator.Current);
+                        if(price <= 0)
+                            continue;
+                        double bonus = GetBuffBonusFromPrice(price);
+                        if (bonus == 0)
+                            continue;
+                        Plugin.LogSource.LogWarning($"BONUS of {enumerator.Current.Name.Localized()} is {bonus}");
+                        double_0 += bonus;
                     }
                 }
 
@@ -106,10 +114,10 @@ namespace HallOfFameImprovements
                 __instance.Data.CurrentStage.Bonuses.Data.Add(gclass2);
                 bonusController_0.AddBonus(gclass2, false);
 
-                Plugin.LogSource.LogWarning($"BUFF APPLIED?!?!");
+                Plugin.LogSource.LogWarning($"HALL OF FAME BONUS UPDATED");
             }
         }
-        public static bool method_1(Item i)
+        public static bool ItemIsNotDogtag(Item i)
         {
             return i.GetItemComponent<DogtagComponent>() == null;
         }
@@ -129,6 +137,37 @@ namespace HallOfFameImprovements
             Plugin.LogSource.LogWarning($"Price of {lootItem.Name.Localized()} is {price}");
 
             return price;
+        }
+
+        public static double GetBuffBonusFromPrice(float price)
+        {
+            if (price <= 0)
+                return 0;
+            double bonus = 0;
+            bonus = (Math.Log10(price) - 4) / 10;
+            bonus = Math.Max(bonus, 0);
+            return bonus;
+        }
+    }
+
+    internal class UpdateBonusOnItemSlottedPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return AccessTools.Method(typeof(PlaceOfFameBehaviour), nameof(PlaceOfFameBehaviour.method_12));
+        }
+
+        [PatchPostfix]
+        static void Postfix(PlaceOfFameBehaviour __instance, Item item, EFT.InventoryLogic.IContainer itemContainer, CommandStatus status)
+        {
+            if (status != CommandStatus.Succeed)
+            {
+                return;
+            }
+            if (item.GetItemComponent<DogtagComponent>() == null && __instance.method_13(itemContainer))
+            {
+                __instance.method_14();
+            }
         }
     }
 }
