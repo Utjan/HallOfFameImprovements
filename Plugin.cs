@@ -24,8 +24,6 @@ namespace HallOfFameImprovements
     {
         public static ManualLogSource LogSource;
 
-        public static Dictionary<string, HandbookData> hbData;
-
         private void Awake() //Awake() will run once when your plugin loads
         {
             //enabledPlugin = Config.Bind(
@@ -56,12 +54,12 @@ namespace HallOfFameImprovements
             //    new ConfigDescription("Multiplies the time it takes to protect task objective. Like when placing a MS2000 marker. 0.5 = time is halved. 2.0 = time is doubled. 0 is instant", new AcceptableValueRange<float>(0, 5))
             //);
 
-            Plugin.LogSource.LogWarning($"AWAKE");
-
             LogSource = Logger;
 
+            LogSource.LogWarning($"AWAKE");
+
             new TestPatch1().Enable();
-            Plugin.LogSource.LogWarning($"HOF PATCHED");
+            LogSource.LogWarning($"HOF PATCHED");
             //new BeaconPlantPatch().Enable();
         }
 
@@ -69,6 +67,8 @@ namespace HallOfFameImprovements
 
     internal class TestPatch1 : ModulePatch
     {
+        public static Dictionary<string, HandbookData> hbData;
+
         protected override MethodBase GetTargetMethod()
         {
             return AccessTools.Method(typeof(PlaceOfFameBehaviour), nameof(PlaceOfFameBehaviour.method_14));
@@ -116,14 +116,14 @@ namespace HallOfFameImprovements
 
         public static float GetItemHandbookPrice(Item lootItem)
         {
-            if (Plugin.hbData == null)
+            if (hbData == null)
             {
-                Plugin.hbData = Singleton<HandbookClass>.Instance.Items.ToDictionary(
+                hbData = Singleton<HandbookClass>.Instance.Items.ToDictionary(
                     (item) => item.Id
                 );
             }
 
-            Plugin.hbData.TryGetValue(lootItem.TemplateId, out HandbookData value);
+            hbData.TryGetValue(lootItem.TemplateId, out HandbookData value);
             float price = value?.Price ?? 0;
 
             Plugin.LogSource.LogWarning($"Price of {lootItem.Name.Localized()} is {price}");
