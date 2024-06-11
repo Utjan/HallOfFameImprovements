@@ -25,47 +25,38 @@ namespace HallOfFameImprovements
     {
         public static ManualLogSource LogSource;
 
+        internal static ConfigEntry<bool> enabledPlugin;
+        internal static ConfigEntry<double> bonusMultiplierNonDogtagItems;
+        internal static ConfigEntry<double> bonusMultiplierDogtags;
+
         private void Awake() //Awake() will run once when your plugin loads
         {
-            //enabledPlugin = Config.Bind(
-            //    "Main Settings",
-            //    "Enable Mod",
-            //    true,
-            //    new ConfigDescription("Enable timer multipliers")
-            //);
+            enabledPlugin = Config.Bind(
+                "Main Settings",
+                "Enable Mod",
+                true,
+                new ConfigDescription("Enable Hall of Fame Improvements")
+            );
 
-            //timeMultiplierRepair = Config.Bind(
-            //    "Main Settings",
-            //    "Repair objective Time Multiplier",
-            //    0.5f,
-            //    new ConfigDescription("Multiplies the duration when doing 'Repairing objective' task action. 0.5 = time is halved. 2.0 = time is doubled. 0 is instant", new AcceptableValueRange<float>(0, 5))
-            //);
+            bonusMultiplierNonDogtagItems = Config.Bind(
+                "Main Settings",
+                "Non-Dogtag Item buff bonus multiplier",
+                1d,
+                new ConfigDescription("Multiplies the base bonus to Hall of Fame skill buff gained from non-dogtag items. 0.5 = half bonus gain. 2.0 = double bonus gain", new AcceptableValueRange<double>(0, 5))
+            );
 
-            //timeMultiplierHide = Config.Bind(
-            //    "Main Settings",
-            //    "Hide objective Time Multiplier",
-            //    0.5f,
-            //    new ConfigDescription("Multiplies the duration when doing 'Hiding objective' task action. 0.5 = time is halved. 2.0 = time is doubled. 0 is instant", new AcceptableValueRange<float>(0, 5))
-            //);
-
-            //timeMultiplierProtect = Config.Bind(
-            //    "Main Settings",
-            //    "Protect objective Time Multiplier",
-            //    0.5f,
-            //    new ConfigDescription("Multiplies the time it takes to protect task objective. Like when placing a MS2000 marker. 0.5 = time is halved. 2.0 = time is doubled. 0 is instant", new AcceptableValueRange<float>(0, 5))
-            //);
+            bonusMultiplierDogtags = Config.Bind(
+                "Main Settings",
+                "Dogtag buff bonus multiplier",
+                1d,
+                new ConfigDescription("Multiplies the base bonus to Hall of Fame skill buff gained from dogtags. Leave at 1 for default EFT bonus", new AcceptableValueRange<double>(0, 5))
+            );
 
             LogSource = Logger;
 
-            LogSource.LogWarning($"AWAKE");
-
             new ApplyNonDogtagItemsPatch().Enable();
             new UpdateBonusOnItemSlottedPatch().Enable();
-            
-            LogSource.LogWarning($"HOF PATCHED");
-            //new BeaconPlantPatch().Enable();
         }
-
     }
 
     internal class ApplyNonDogtagItemsPatch : ModulePatch
@@ -80,14 +71,20 @@ namespace HallOfFameImprovements
         [PatchPostfix]
         static void Postfix(PlaceOfFameBehaviour __instance)
         {
+#if DEBUG
             Plugin.LogSource.LogWarning($"Calculating Hall of Fame bonus");
+#endif
 
             GClass1420 gclass;
             if ((gclass = (__instance.Data.CurrentStage.Bonuses.Data.FirstOrDefault(new Func<GClass1407, bool>(PlaceOfFameBehaviour.Class1644.class1644_0.method_3)) as GClass1420)) != null)
             {
                 double double_0 = Traverse.Create(__instance).Field("double_0").GetValue<double>();
 
+                double_0 *= Plugin.bonusMultiplierDogtags.Value;
+
+#if DEBUG
                 Plugin.LogSource.LogWarning($"Bonus from dogtags {double_0}");
+#endif
 
                 LootItemClass gclass2629_0 = Traverse.Create(__instance).Field("gclass2629_0").GetValue<LootItemClass>();
 
@@ -98,11 +95,16 @@ namespace HallOfFameImprovements
                         float price = GetItemHandbookPrice(enumerator.Current);
                         if(price <= 0)
                             continue;
+
                         double bonus = GetBuffBonusFromPrice(price);
                         if (bonus == 0)
                             continue;
+
+#if DEBUG
                         Plugin.LogSource.LogWarning($"BONUS of {enumerator.Current.Name.Localized()} is {bonus}");
-                        double_0 += bonus;
+#endif
+
+                        double_0 += bonus * Plugin.bonusMultiplierNonDogtagItems.Value;
                     }
                 }
 
@@ -114,7 +116,9 @@ namespace HallOfFameImprovements
                 __instance.Data.CurrentStage.Bonuses.Data.Add(gclass2);
                 bonusController_0.AddBonus(gclass2, false);
 
-                Plugin.LogSource.LogWarning($"HALL OF FAME BONUS UPDATED");
+#if DEBUG
+                Plugin.LogSource.LogWarning($"HALL OF FAME BONUS UPDATED: {double_0}");
+#endif
             }
         }
         public static bool ItemIsNotDogtag(Item i)
@@ -134,7 +138,9 @@ namespace HallOfFameImprovements
             hbData.TryGetValue(lootItem.TemplateId, out HandbookData value);
             float price = value?.Price ?? 0;
 
+#if DEBUG
             Plugin.LogSource.LogWarning($"Price of {lootItem.Name.Localized()} is {price}");
+#endif
 
             return price;
         }
