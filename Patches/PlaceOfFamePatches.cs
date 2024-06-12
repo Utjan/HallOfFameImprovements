@@ -69,9 +69,8 @@ namespace HallOfFameImprovements.Patches
                         }
 
 #if DEBUG
-                        Plugin.LogSource.LogWarning($"BONUS of {enumerator.Current.Name.Localized()} is {bonus}");
+                        Plugin.LogSource.LogWarning($"BONUS of {enumerator.Current.Name.Localized()} is {bonus} and price {price}");
 #endif
-
                     }
                 }
 
@@ -105,10 +104,6 @@ namespace HallOfFameImprovements.Patches
             hbData.TryGetValue(lootItem.TemplateId, out HandbookData value);
             float price = value?.Price ?? 0;
 
-#if DEBUG
-            Plugin.LogSource.LogWarning($"Price of {lootItem.Name.Localized()} is {price}");
-#endif
-
             return price;
         }
 
@@ -116,7 +111,7 @@ namespace HallOfFameImprovements.Patches
         {
             if (price <= 0)
                 return 0;
-            double bonus = (Math.Log10(price) - 4) / 8;
+            double bonus = (Math.Log10(price) - 4) / 5;
             bonus = Math.Max(bonus, 0);
             return bonus;
         }
