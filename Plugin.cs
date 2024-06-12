@@ -21,7 +21,7 @@ using HallOfFameImprovements.Patches;
 
 namespace HallOfFameImprovements
 {
-    [BepInPlugin("com.utjan.HoFImprovements", "utjan.HoFImprovements", "1.0")]
+    [BepInPlugin("com.utjan.HoFImprovements", "utjan.HoFImprovements", "1.1")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource LogSource;
@@ -44,21 +44,21 @@ namespace HallOfFameImprovements
                 "Hall of Fame Improvements",
                 "Trophy skill bonus multiplier",
                 1d,
-                new ConfigDescription("Multiplies the base bonus to Hall of Fame skill buff gained from non-dogtag items. 0.5 = half bonus gain. 2.0 = double bonus gain", new AcceptableValueRange<double>(0, 5))
+                new ConfigDescription("Multiplies the base bonus to Hall of Fame skill leveling bonus gained from non-dogtag items. 0.5 = half bonus gain. 2.0 = double bonus gain", new AcceptableValueRange<double>(0, 5))
             );
 
             bonusMultiplierDogtags = Config.Bind(
                 "Hall of Fame Improvements",
                 "Dogtag skill bonus multiplier",
                 2d,
-                new ConfigDescription("Multiplies the base bonus to Hall of Fame skill buff gained from dogtags. Leave at 1 for default EFT bonus", new AcceptableValueRange<double>(0, 5))
+                new ConfigDescription("Multiplies the base bonus to Hall of Fame skill leveling bonus gained from dogtags. Set to 1 for default EFT bonus", new AcceptableValueRange<double>(0, 5))
             );
 
             uniqueItemBonus = Config.Bind(
                 "Hall of Fame Improvements",
-                "Buff bonus per unique item",
+                "Unique trophy skill bonus",
                 0.2d,
-                new ConfigDescription("Hall of Fame skill buff bonus gained per unique non-dogtag item. Applies on top of the bonus gained based on the item's value", new AcceptableValueRange<double>(0, 1))
+                new ConfigDescription("Hall of Fame skill leveling bonus gained per unique trophy item. Unique meaning one of each item. Applies on top of the bonus gained based on the item's value", new AcceptableValueRange<double>(0, 1))
             );
 
             LogSource = Logger;
