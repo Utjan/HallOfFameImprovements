@@ -45,42 +45,42 @@ namespace HallOfFameImprovements
 
             bonusMultiplierNonDogtagItems = Config.Bind(
                 "Hall of Fame Improvements",
-                "Trophy skill bonus multiplier",
+                "2. Trophy skill bonus multiplier",
                 1d,
                 new ConfigDescription("Multiplies the base bonus to Hall of Fame skill leveling bonus gained from non-dogtag items. 0.5 = half bonus gain. 2.0 = double bonus gain", new AcceptableValueRange<double>(0, 5))
             );
 
             bonusMultiplierDogtags = Config.Bind(
                 "Hall of Fame Improvements",
-                "Dogtag skill bonus multiplier",
+                "3. Dogtag skill bonus multiplier",
                 1d,
                 new ConfigDescription("Multiplies the base bonus to Hall of Fame skill leveling bonus gained from dogtags. Set to 1 for default EFT bonus", new AcceptableValueRange<double>(0, 5))
             );
 
             uniqueItemBonus = Config.Bind(
                 "Hall of Fame Improvements",
-                "Unique trophy skill bonus",
+                "4. Unique trophy skill bonus",
                 0.2d,
                 new ConfigDescription("Hall of Fame skill leveling bonus gained per unique trophy item. Unique meaning one of each item. Applies on top of the bonus gained based on the item's value", new AcceptableValueRange<double>(0, 1))
             );
 
             uniqueBonusOnlyFIR = Config.Bind(
                 "Hall of Fame Improvements",
-                "Only FIR trophies give unique bonus",
+                "5. Only FIR trophies give unique bonus",
                 true,
-                new ConfigDescription("Enable Hall of Fame Improvements")
+                new ConfigDescription("Only give the unique bonus for a trophy if it is tagged as Found-In-Raid")
             );
 
             FIRmultiplier = Config.Bind(
                 "Hall of Fame Improvements",
-                "Trophy found-in-raid multiplier",
+                "6. Trophy found-in-raid multiplier",
                 1d,
                 new ConfigDescription("Multiplies the skill bonus from trophies that are tagged as Found-In-Round. Does not apply to Unique trophy bonus", new AcceptableValueRange<double>(0, 1))
             );
 
             nonFIRmultiplier = Config.Bind(
                 "Hall of Fame Improvements",
-                "Trophy NOT found-in-raid multiplier",
+                "7. Trophy NOT found-in-raid multiplier",
                 0.5d,
                 new ConfigDescription("Multiplies the skill bonus from trophies that are NOT tagged as Found-In-Round. Does not apply to Unique trophy bonus", new AcceptableValueRange<double>(0, 1))
             );

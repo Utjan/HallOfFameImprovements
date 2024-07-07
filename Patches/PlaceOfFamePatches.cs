@@ -122,8 +122,8 @@ namespace HallOfFameImprovements.Patches
         {
             if (price <= 0)
                 return 0;
-            double bonus = (Math.Log10(price) - 4) / 5;
-            bonus = Math.Max(bonus, 0);
+            double bonus = Math.Max( (Math.Log10(price) - 4) / 5 , 0.1);
+            //double bonus = Math.Pow(price / 5000000, 0.4);
             return bonus;
         }
     }
