@@ -1,4 +1,4 @@
-﻿using Aki.Reflection.Patching;
+﻿using SPT.Reflection.Patching;
 using EFT.HandBook;
 using EFT.Hideout;
 using EFT.InventoryLogic;
@@ -35,8 +35,8 @@ namespace HallOfFameImprovements.Patches
             Plugin.LogSource.LogWarning($"Calculating Hall of Fame bonus");
 #endif
 
-            GClass1420 gclass;
-            if ((gclass = (__instance.Data.CurrentStage.Bonuses.Data.FirstOrDefault(new Func<GClass1407, bool>(PlaceOfFameBehaviour.Class1644.class1644_0.method_3)) as GClass1420)) != null)
+            GClass1431 gclass;
+            if ((gclass = (__instance.Data.CurrentStage.Bonuses.Data.FirstOrDefault(new Func<SkillBonusAbstractClass, bool>(PlaceOfFameBehaviour.Class1672.class1672_0.method_3)) as GClass1431)) != null)
             {
                 double levelingBonus = Traverse.Create(__instance).Field("double_0").GetValue<double>();
 
@@ -48,8 +48,8 @@ namespace HallOfFameImprovements.Patches
 
                 uniqueItemList = new List<string>();
 
-                LootItemClass gclass2629_0 = Traverse.Create(__instance).Field("gclass2629_0").GetValue<LootItemClass>();
-                using (List<Item>.Enumerator enumerator = gclass2629_0.GetAllItems().Where(new Func<Item, bool>(ItemIsNotDogtag)).ToList<Item>().GetEnumerator())
+                LootItemClass lootItemClass = Traverse.Create(__instance).Field("lootItemClass").GetValue<LootItemClass>();
+                using (List<Item>.Enumerator enumerator = lootItemClass.GetAllItems().Where(new Func<Item, bool>(ItemIsNotDogtag)).ToList<Item>().GetEnumerator())
                 {
                     while (enumerator.MoveNext())
                     {
@@ -58,25 +58,23 @@ namespace HallOfFameImprovements.Patches
                             continue;
 
                         double bonus = GetBuffBonusFromPrice(price);
+                        double uniqueBonus = GetUniqueBonus(enumerator.Current);
+                        double FIRmult = enumerator.Current.MarkedAsSpawnedInSession ? Plugin.FIRmultiplier.Value : Plugin.nonFIRmultiplier.Value;
 
                         if (bonus > 0)
-                            levelingBonus += bonus * Plugin.bonusMultiplierNonDogtagItems.Value;
+                            bonus *= Plugin.bonusMultiplierNonDogtagItems.Value * FIRmult;
 
-                        if (Plugin.uniqueItemBonus.Value > 0 && !uniqueItemList.Contains(enumerator.Current.TemplateId))
-                        {
-                            levelingBonus += Plugin.uniqueItemBonus.Value;
-                            uniqueItemList.Add(enumerator.Current.TemplateId);
-                        }
+                        levelingBonus += bonus + uniqueBonus;
 
 #if DEBUG
-                        Plugin.LogSource.LogWarning($"BONUS of {enumerator.Current.Name.Localized()} is {bonus} and price {price}");
+                        Plugin.LogSource.LogWarning($"BONUS of {enumerator.Current.Name.Localized()} is {Math.Round(bonus, 3)} (unq {uniqueBonus}) and price {price} - FIR: {enumerator.Current.MarkedAsSpawnedInSession}");
 #endif
                     }
                 }
 
                 BonusController bonusController_0 = Traverse.Create(__instance).Field("bonusController_0").GetValue<BonusController>();
 
-                GClass1420 gclass2 = new GClass1420(Math.Round(levelingBonus, 1), gclass.BoostValue, gclass.Id, gclass.IsVisible, gclass.Icon);
+                GClass1431 gclass2 = new GClass1431(Math.Round(levelingBonus, 1), gclass.BoostValue, gclass.Id, gclass.IsVisible, gclass.Icon);
                 bonusController_0.RemoveBonus(gclass, false);
                 __instance.Data.CurrentStage.Bonuses.Data.Remove(gclass);
                 __instance.Data.CurrentStage.Bonuses.Data.Add(gclass2);
@@ -90,6 +88,19 @@ namespace HallOfFameImprovements.Patches
         public static bool ItemIsNotDogtag(Item i)
         {
             return i.GetItemComponent<DogtagComponent>() == null;
+        }
+
+        public static double GetUniqueBonus(Item item)
+        {
+            if (Plugin.uniqueItemBonus.Value > 0 && !uniqueItemList.Contains(item.TemplateId))
+            {
+                if (!Plugin.uniqueBonusOnlyFIR.Value || item.MarkedAsSpawnedInSession)
+                {
+                    uniqueItemList.Add(item.TemplateId);
+                    return Plugin.uniqueItemBonus.Value;
+                }
+            }
+            return 0;
         }
 
         public static float GetItemHandbookPrice(Item lootItem)
